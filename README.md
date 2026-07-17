@@ -1,2 +1,1 @@
 # SafeZone
-Proyecto Escolar

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeZone - Dispositivo Emisor</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <h1>SafeZone - Alerta</h1>
+    <p class="description">Dispositivo de Emergencia</p>
+
+    <div class="dashboard">
+        <div class="panel" id="panel-emisor">
+            <div class="panel-title">📱 Dispositivo Emisor (Víctima)</div>
+            
+            <button class="emergency-btn" id="btn-power-trigger">
+                Simular Botón<br>(4 Clics rápidos)
+            </button>
+
+            <div class="touch-zone" id="touch-multitouch-zone">
+                ZONA MULTITÁCTIL<br>Apoyá 4 dedos acá por 2s
+            </div>
+
+            <div class="alert-overlay" id="emisor-overlay">
+                <h2 style="font-size: 24px; margin: 0 0 10px 0;">🚨 ALERTA ACTIVA</h2>
+                <p style="color: #FCA5A5; font-size: 14px;">Datos de red enviados a Firebase.</p>
+                <button class="btn-cancel" id="btn-cancelar">Desactivar</button>
+            </div>
+        </div>
+    </div>  
+
+    <script src="emisor.js"></script>
+</body>
+</html>

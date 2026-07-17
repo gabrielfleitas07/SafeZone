@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeZone - Inicio</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .dashboard .panel {
+            height: auto;
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+        .menu-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            margin-top: 15px;
+            flex-grow: 1;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: left;
+        }
+        .form-group label {
+            color: #94A3B8;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .form-group input {
+            background-color: #0F172A;
+            border: 2px solid #334155;
+            color: #F8FAFC;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #38BDF8;
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+        }
+        .btn-access {
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            margin-top: auto;
+            color: #F8FAFC;
+            transition: transform 0.1s, filter 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .btn-access:active {
+            transform: scale(0.98);
+        }
+        .btn-emisor {
+            background-color: #EF4444;
+        }
+        .btn-emisor:hover {
+            filter: brightness(1.1);
+        }
+        .btn-receptor {
+            background-color: #10B981;
+        }
+        .btn-receptor:hover {
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>SafeZone</h1>
+    <p class="description">Sistema de Alerta y Monitoreo Personalizado en Tiempo Real</p>
+
+    <div class="dashboard">
+        <div class="panel">
+            <div class="panel-title">📱 Modo Emisor (Dispositivo)</div>
+            <p style="color: #94A3B8; font-size: 14px; margin: 0 0 15px 0;">Configurá tu identificador y quién va a recibir tus alertas de auxilio.</p>
+            
+            <div class="menu-container">
+                <div class="form-group">
+                    <label for="emisor-id">Tu ID de Emisor</label>
+                    <input type="text" id="emisor-id" placeholder="Ej: Juan123">
+                </div>
+                <div class="form-group">
+                    <label for="receptor-target">ID de tu Receptor (Protector)</label>
+                    <input type="text" id="receptor-target" placeholder="Ej: Papa456">
+                </div>
+                <button class="btn-access btn-emisor" id="go-emisor">Ingresar como Emisor</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">🛡️ Modo Receptor (Centro de Control)</div>
+            <p style="color: #94A3B8; font-size: 14px; margin: 0 0 15px 0;">Ingresá tu código para escuchar las alertas del emisor que te asignó.</p>
+            
+            <div class="menu-container">
+                <div class="form-group">
+                    <label for="receptor-id">Tu ID de Receptor</label>
+                    <input type="text" id="receptor-id" placeholder="Ej: Papa456">
+                </div>
+                <button class="btn-access btn-receptor" id="go-receptor">Ingresar como Receptor</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('go-emisor').addEventListener('click', () => {
+            const idEmisor = document.getElementById('emisor-id').value.trim();
+            const idReceptor = document.getElementById('receptor-target').value.trim();
+
+            if (!idEmisor || !idReceptor) {
+                alert("Por favor, completá ambos campos para el modo Emisor.");
+                return;
+            }
+            window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}`;
+        });
+
+        document.getElementById('go-receptor').addEventListener('click', () => {
+            const idReceptor = document.getElementById('receptor-id').value.trim();
+
+            if (!idReceptor) {
+                alert("Por favor, ingresá tu ID de Receptor.");
+                return;
+            }
+            window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}`;
+        });
+    </script>
+</body>
+</html>

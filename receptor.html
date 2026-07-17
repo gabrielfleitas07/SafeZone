@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeZone - Central de Monitoreo</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+</head>
+<body>
+
+    <h1>SafeZone - Centro de Control</h1>
+    <p class="description">Monitoreo Seguro en Tiempo Real</p>
+
+    <div class="dashboard">
+        <div class="panel" id="panel-receptor">
+            <div class="panel-title">🛡️ Central de Confianza (Protector)</div>
+            
+            <div class="waiting-state" id="receptor-waiting">
+                <span style="font-size: 40px; display: block; margin-bottom: 10px;">🔒</span>
+                <p style="margin: 0; font-weight: bold;">Canal Seguro Protegido</p>
+                <p style="margin: 5px 0 0 0; font-size: 14px;">Monitoreando actividad del Emisor...</p>
+            </div>
+
+            <div class="alarm-state" id="receptor-alarm">
+                <h2 style="color: white; margin: 0; font-size: 26px;">⚠️ ALERTA ENTRANTE</h2>
+                <p style="margin: 10px 0 0 0; text-align: center; color: #FEE2E2;">Se ha detectado una señal de auxilio. Coordenadas:</p>
+                
+                <div class="ip-box" id="display-shared-coords" style="font-size: 16px; text-align: center;">
+                    Buscando coordenadas...
+                </div>
+
+                <a id="btn-ver-mapa" href="#" target="_blank" class="btn-cancel" style="background-color: #38BDF8; color: #0F172A; text-decoration: none; display: inline-block; text-align: center; margin-top: 15px;">
+                    📍 Ver en Google Maps
+                </a>
+            </div>
+        </div>
+    </div>  
+
+    <script src="receptor.js"></script>
+</body>
+</html>
