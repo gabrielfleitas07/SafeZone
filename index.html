@@ -70,92 +70,92 @@
     </div>
 
     <!-- Script de Firebase y Lógica -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
-            authDomain: "safezone-9afe4.firebaseapp.com",
-            databaseURL: "https://safezone-9afe4-default-rtdb.firebaseio.com",
-            projectId: "safezone-9afe4",
-            storageBucket: "safezone-9afe4.firebasestorage.app",
-            messagingSenderId: "366054781732",
-            appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
-        };
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
+        authDomain: "safezone-9afe4.firebaseapp.com",
+        databaseURL: "https://safezone-9afe4-default-rtdb.firebaseio.com",
+        projectId: "safezone-9afe4",
+        storageBucket: "safezone-9afe4.firebasestorage.app",
+        messagingSenderId: "366054781732",
+        appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-        const authOutView = document.getElementById('auth-logged-out');
-        const authInView = document.getElementById('auth-logged-in');
-        const mainDashboard = document.getElementById('main-dashboard');
+    const authOutView = document.getElementById('auth-logged-out');
+    const authInView = document.getElementById('auth-logged-in');
+    const mainDashboard = document.getElementById('main-dashboard');
+    
+    let currentUser = null;
+
+    // 1. Manejar el resultado del redireccionamiento al volver de Google
+    auth.getRedirectResult()
+        .then((result) => {
+            if (result.user) {
+                console.log("Sesión iniciada tras redirección:", result.user);
+            }
+        })
+        .catch((error) => {
+            console.error("Error al procesar redirección de inicio de sesión:", error);
+            alert("Error al iniciar sesión: " + error.message);
+        });
+
+    // 2. Listener del estado de autenticación
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-name').innerText = user.displayName || "Usuario SafeZone";
+            document.getElementById('user-email').innerText = user.email || user.uid;
+            document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/45?text=U';
+            
+            authOutView.style.display = 'none';
+            authInView.style.display = 'flex';
+            mainDashboard.style.display = 'flex';
+        } else {
+            currentUser = null;
+            authOutView.style.display = 'block';
+            authInView.style.display = 'none';
+            mainDashboard.style.display = 'none';
+        }
+    });
+
+    // 3. Evento de inicio de sesión optimizado para móviles (signInWithRedirect)
+    document.getElementById('btn-login-google').addEventListener('click', () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        // Cambiado de signInWithPopup a signInWithRedirect
+        auth.signInWithRedirect(provider);
+    });
+
+    // Evento cerrar sesión
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        auth.signOut();
+    });
+
+    // Redirección Emisor
+    document.getElementById('go-emisor').addEventListener('click', () => {
+        if (!currentUser) return;
+        const idReceptor = document.getElementById('receptor-target').value.trim();
+
+        if (!idReceptor) {
+            alert("Por favor, ingresá el ID o correo del Receptor.");
+            return;
+        }
+
+        const idEmisor = currentUser.uid;
+        const emisorName = currentUser.displayName || currentUser.email || "Emisor";
+        window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}&name=${encodeURIComponent(emisorName)}`;
+    });
+
+    // Redirección Receptor
+    document.getElementById('go-receptor').addEventListener('click', () => {
+        if (!currentUser) return;
         
-        let currentUser = null;
-
-        // Listener del estado de autenticación
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('user-name').innerText = user.displayName || "Usuario SafeZone";
-                document.getElementById('user-email').innerText = user.email || user.uid;
-                document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/45?text=U';
-                
-                authOutView.style.display = 'none';
-                authInView.style.display = 'flex';
-                mainDashboard.style.display = 'flex';
-            } else {
-                currentUser = null;
-                authOutView.style.display = 'block';
-                authInView.style.display = 'none';
-                mainDashboard.style.display = 'none';
-            }
-        });
-
-        // Evento iniciar sesión con Google
-        document.getElementById('btn-login-google').addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    console.log("Sesión iniciada correctamente:", result.user);
-                })
-                .catch((error) => {
-                    if (error.code === 'auth/popup-closed-by-user') {
-                        console.log("El usuario cerró la ventana flotante.");
-                    } else if (error.code === 'auth/popup-blocked') {
-                        alert("El navegador bloqueó la ventana emergente. Por favor, permití los popups para este sitio.");
-                    } else {
-                        alert("Error al iniciar sesión: " + error.message);
-                    }
-                });
-        });
-
-        // Evento cerrar sesión
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            auth.signOut();
-        });
-
-        // Redirección Emisor
-        document.getElementById('go-emisor').addEventListener('click', () => {
-            if (!currentUser) return;
-            const idReceptor = document.getElementById('receptor-target').value.trim();
-
-            if (!idReceptor) {
-                alert("Por favor, ingresá el ID o correo del Receptor.");
-                return;
-            }
-
-            const idEmisor = currentUser.uid;
-            const emisorName = currentUser.displayName || currentUser.email || "Emisor";
-            window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}&name=${encodeURIComponent(emisorName)}`;
-        });
-
-        // Redirección Receptor
-        document.getElementById('go-receptor').addEventListener('click', () => {
-            if (!currentUser) return;
-            
-            const idReceptor = currentUser.uid;
-            const emailReceptor = currentUser.email || "";
-            window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
-        });
-    </script>
+        const idReceptor = currentUser.uid;
+        const emailReceptor = currentUser.email || "";
+        window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
+    });
+</script>
 </body>
 </html>
