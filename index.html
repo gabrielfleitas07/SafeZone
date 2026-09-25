@@ -72,7 +72,7 @@
     </div>
 
     <!-- Lógica JavaScript -->
-<script>
+  <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
         authDomain: "safezone-9afe4.firebaseapp.com",
@@ -83,26 +83,23 @@
         appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
     };
 
-    // 1. Inicialización
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-
-    // 2. FORZAR PERSISTENCIA LOCAL (Evita la pérdida de estado en session/redirect)
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-        .then(() => {
-            console.log("Persistencia LOCAL configurada.");
-        })
-        .catch((error) => {
-            console.error("Error estableciendo persistencia:", error);
-        });
+    auth.useDeviceLanguage();
 
     const authOutView = document.getElementById('auth-logged-out');
     const authInView = document.getElementById('auth-logged-in');
     const mainDashboard = document.getElementById('main-dashboard');
+    const btnLoginGoogle = document.getElementById('btn-login-google');
     
     let currentUser = null;
 
-    // 3. Listener del estado del usuario (Gestiona el login tanto si entra directo como tras redirección)
+    // Detectar si estamos dentro de una WebView de Android/APK
+    function esWebViewAndroid() {
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        return (ua.indexOf("wv") > -1) || (ua.indexOf("Android") > -1 && ua.indexOf("Version/") > -1);
+    }
+
     auth.onAuthStateChanged((user) => {
         if (user) {
             currentUser = user;
@@ -121,44 +118,37 @@
         }
     });
 
-    // 4. Iniciar sesión obligando a signInWithPopup pero detectando fallos táctiles/móviles
-    document.getElementById('btn-login-google').addEventListener('click', () => {
-        const provider = new firebase.auth.GoogleAuthProvider();
-
-        auth.signInWithPopup(provider)
-            .then((result) => {
-                console.log("Sesión iniciada:", result.user);
-            })
-            .catch((error) => {
-                console.error("Error en Popup:", error);
-                alert("Error de autenticación: " + error.message);
+    btnLoginGoogle.addEventListener('click', () => {
+        if (esWebViewAndroid()) {
+            // Si es WebView, abrimos la URL en el navegador del sistema
+            const googleAuthUrl = `https://safezone-9afe4.firebaseapp.com/__/auth/handler`;
+            window.open(`https://gabrielfleitas07.github.io/SafeZone/`, '_system');
+            alert("Para iniciar sesión en la APK, abrí el enlace en el navegador Chrome de tu teléfono.");
+        } else {
+            // Si es un navegador normal
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch((error) => {
+                alert("Error: " + error.message);
             });
+        }
     });
 
-    // Cerrar Sesión
-    document.getElementById('btn-logout').addEventListener('click', () => {
-        auth.signOut();
-    });
+    document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
 
-    // Redirección Emisor
     document.getElementById('go-emisor').addEventListener('click', () => {
         if (!currentUser) return;
         const idReceptor = document.getElementById('receptor-target').value.trim();
-
         if (!idReceptor) {
             alert("Por favor, ingresá el ID o correo del Receptor.");
             return;
         }
-
         const idEmisor = currentUser.uid;
         const emisorName = currentUser.displayName || currentUser.email || "Emisor";
         window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}&name=${encodeURIComponent(emisorName)}`;
     });
 
-    // Redirección Receptor
     document.getElementById('go-receptor').addEventListener('click', () => {
         if (!currentUser) return;
-        
         const idReceptor = currentUser.uid;
         const emailReceptor = currentUser.email || "";
         window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
