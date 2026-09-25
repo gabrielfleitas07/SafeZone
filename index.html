@@ -72,107 +72,97 @@
     </div>
 
     <!-- Lógica JavaScript -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
-            authDomain: "safezone-9afe4.firebaseapp.com",
-            databaseURL: "https://safezone-9afe4-default-rtdb.firebaseio.com",
-            projectId: "safezone-9afe4",
-            storageBucket: "safezone-9afe4.firebasestorage.app",
-            messagingSenderId: "366054781732",
-            appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
-        };
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
+        authDomain: "safezone-9afe4.firebaseapp.com",
+        databaseURL: "https://safezone-9afe4-default-rtdb.firebaseio.com",
+        projectId: "safezone-9afe4",
+        storageBucket: "safezone-9afe4.firebasestorage.app",
+        messagingSenderId: "366054781732",
+        appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
+    };
 
-        // Inicialización de Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        auth.useDeviceLanguage();
+    // 1. Inicialización
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-        const authOutView = document.getElementById('auth-logged-out');
-        const authInView = document.getElementById('auth-logged-in');
-        const mainDashboard = document.getElementById('main-dashboard');
-        
-        let currentUser = null;
+    // 2. FORZAR PERSISTENCIA LOCAL (Evita la pérdida de estado en session/redirect)
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => {
+            console.log("Persistencia LOCAL configurada.");
+        })
+        .catch((error) => {
+            console.error("Error estableciendo persistencia:", error);
+        });
 
-        // Capturar redirecciones pendientes si se usó signInWithRedirect en móviles
-        auth.getRedirectResult()
+    const authOutView = document.getElementById('auth-logged-out');
+    const authInView = document.getElementById('auth-logged-in');
+    const mainDashboard = document.getElementById('main-dashboard');
+    
+    let currentUser = null;
+
+    // 3. Listener del estado del usuario (Gestiona el login tanto si entra directo como tras redirección)
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            currentUser = user;
+            document.getElementById('user-name').innerText = user.displayName || "Usuario SafeZone";
+            document.getElementById('user-email').innerText = user.email || user.uid;
+            document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/45?text=U';
+            
+            authOutView.style.display = 'none';
+            authInView.style.display = 'flex';
+            mainDashboard.style.display = 'flex';
+        } else {
+            currentUser = null;
+            authOutView.style.display = 'block';
+            authInView.style.display = 'none';
+            mainDashboard.style.display = 'none';
+        }
+    });
+
+    // 4. Iniciar sesión obligando a signInWithPopup pero detectando fallos táctiles/móviles
+    document.getElementById('btn-login-google').addEventListener('click', () => {
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        auth.signInWithPopup(provider)
             .then((result) => {
-                if (result.user) {
-                    console.log("Sesión iniciada mediante redirección:", result.user);
-                }
+                console.log("Sesión iniciada:", result.user);
             })
             .catch((error) => {
-                if (error.code !== 'auth/null-user') {
-                    console.error("Error tras redirección:", error);
-                }
+                console.error("Error en Popup:", error);
+                alert("Error de autenticación: " + error.message);
             });
+    });
 
-        // Listener del estado de la sesión
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('user-name').innerText = user.displayName || "Usuario SafeZone";
-                document.getElementById('user-email').innerText = user.email || user.uid;
-                document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/45?text=U';
-                
-                authOutView.style.display = 'none';
-                authInView.style.display = 'flex';
-                mainDashboard.style.display = 'flex';
-            } else {
-                currentUser = null;
-                authOutView.style.display = 'block';
-                authInView.style.display = 'none';
-                mainDashboard.style.display = 'none';
-            }
-        });
+    // Cerrar Sesión
+    document.getElementById('btn-logout').addEventListener('click', () => {
+        auth.signOut();
+    });
 
-        // Evento Iniciar Sesión (Popup con fallback a Redirect en caso de bloqueo)
-        document.getElementById('btn-login-google').addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
+    // Redirección Emisor
+    document.getElementById('go-emisor').addEventListener('click', () => {
+        if (!currentUser) return;
+        const idReceptor = document.getElementById('receptor-target').value.trim();
 
-            auth.signInWithPopup(provider)
-                .then((result) => {
-                    console.log("Sesión iniciada con éxito:", result.user);
-                })
-                .catch((error) => {
-                    // Si el navegador de móvil bloquea la ventana emergente, intenta por redirección
-                    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-                        console.warn("Popup bloqueado o cerrado. Reintentando con redirección...");
-                        auth.signInWithRedirect(provider);
-                    } else {
-                        alert("Error al iniciar sesión: " + error.message);
-                    }
-                });
-        });
+        if (!idReceptor) {
+            alert("Por favor, ingresá el ID o correo del Receptor.");
+            return;
+        }
 
-        // Evento Cerrar Sesión
-        document.getElementById('btn-logout').addEventListener('click', () => {
-            auth.signOut();
-        });
+        const idEmisor = currentUser.uid;
+        const emisorName = currentUser.displayName || currentUser.email || "Emisor";
+        window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}&name=${encodeURIComponent(emisorName)}`;
+    });
 
-        // Redirección al modo Emisor
-        document.getElementById('go-emisor').addEventListener('click', () => {
-            if (!currentUser) return;
-            const idReceptor = document.getElementById('receptor-target').value.trim();
-
-            if (!idReceptor) {
-                alert("Por favor, ingresá el ID o correo del Receptor.");
-                return;
-            }
-
-            const idEmisor = currentUser.uid;
-            const emisorName = currentUser.displayName || currentUser.email || "Emisor";
-            window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}&name=${encodeURIComponent(emisorName)}`;
-        });
-
-        // Redirección al modo Receptor
-        document.getElementById('go-receptor').addEventListener('click', () => {
-            if (!currentUser) return;
-            
-            const idReceptor = currentUser.uid;
-            const emailReceptor = currentUser.email || "";
-            window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
-        });
-    </script>
+    // Redirección Receptor
+    document.getElementById('go-receptor').addEventListener('click', () => {
+        if (!currentUser) return;
+        
+        const idReceptor = currentUser.uid;
+        const emailReceptor = currentUser.email || "";
+        window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
+    });
+</script>
 </body>
 </html>
