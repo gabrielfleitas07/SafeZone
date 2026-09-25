@@ -24,21 +24,17 @@ const btnCancelar = document.getElementById('btn-cancelar');
 const urlParams = new URLSearchParams(window.location.search);
 const miIdEmisor = urlParams.get('id');
 const idReceptorElegido = urlParams.get('receptor');
+const emisorNombreUrl = urlParams.get('name') || "Emisor Desconocido";
 
 if (!miIdEmisor || !idReceptorElegido) {
-    alert("Faltan configuraciones de ID. Regresando al inicio.");
+    alert("Faltan configuraciones de usuario autenticado. Regresando al inicio.");
     window.location.href = "index.html";
 } else {
-    // Escribimos el rol de emisor y asociamos al receptor correspondiente en Firebase
-    const userRef = database.ref('usuarios/' + miIdEmisor);
-    userRef.set({
+    database.ref('usuarios/' + miIdEmisor).set({
         rol: "emisor",
+        nombre: emisorNombreUrl,
         receptorAsignado: idReceptorElegido
     });
-
-    // LIMPIEZA AUTOMÁTICA: Si el emisor cierra la pestaña, se remueve su rol y alerta de la DB
-    userRef.onDisconnect().remove();
-    database.ref('alertas/' + miIdEmisor).onDisconnect().remove();
 }
 
 // 1. Simulación botón de encendido (4 clics)
@@ -85,7 +81,7 @@ function dispararAlertaFirebase() {
             (posicion) => {
                 database.ref('alertas/' + miIdEmisor).set({
                     estado: "PELIGRO",
-                    emisorNombre: miIdEmisor,
+                    emisorNombre: emisorNombreUrl,
                     latitud: posicion.coords.latitude,
                     longitud: posicion.coords.longitude,
                     precision: posicion.coords.accuracy
@@ -95,7 +91,7 @@ function dispararAlertaFirebase() {
                 console.error("Error de geolocalización:", error);
                 database.ref('alertas/' + miIdEmisor).set({
                     estado: "PELIGRO",
-                    emisorNombre: miIdEmisor,
+                    emisorNombre: emisorNombreUrl,
                     latitud: null,
                     longitud: null,
                     error_geo: "Permiso denegado o GPS inaccesible"
@@ -106,7 +102,7 @@ function dispararAlertaFirebase() {
     } else {
         database.ref('alertas/' + miIdEmisor).set({
             estado: "PELIGRO",
-            emisorNombre: miIdEmisor,
+            emisorNombre: emisorNombreUrl,
             latitud: null,
             longitud: null,
             error_geo: "API no soportada"

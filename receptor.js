@@ -22,39 +22,35 @@ const btnVerMapa = document.getElementById('btn-ver-mapa');
 // --- LEER ATRIBUTOS DESDE LA URL ---
 const urlParams = new URLSearchParams(window.location.search);
 const miIdReceptor = urlParams.get('id');
+const miEmailReceptor = urlParams.get('email');
 
 if (!miIdReceptor) {
-    alert("Falta ID de Receptor. Regresando al inicio.");
+    alert("Falta autenticación de Receptor. Regresando al inicio.");
     window.location.href = "index.html";
 } else {
-    const userRef = database.ref('usuarios/' + miIdReceptor);
-    userRef.set({
-        rol: "receptor"
+    database.ref('usuarios/' + miIdReceptor).set({
+        rol: "receptor",
+        email: miEmailReceptor || ""
     });
-
-    // LIMPIEZA AUTOMÁTICA: Si el receptor se sale, se remueve su rol de la lista activa
-    userRef.onDisconnect().remove();
 
     database.ref('usuarios').on('value', (snapshot) => {
         const usuarios = snapshot.val();
         let emisorAsignadoId = null;
 
         for (let idUser in usuarios) {
-            // Verifica si algún usuario es emisor y te tiene asignado a vos como su receptor
-            if (usuarios[idUser].rol === "emisor" && usuarios[idUser].receptorAsignado === miIdReceptor) {
-                emisorAsignadoId = idUser;
-                break;
+            const u = usuarios[idUser];
+            if (u.rol === "emisor") {
+                // Coincidir por UID de Google o por Email del receptor asignado
+                if (u.receptorAsignado === miIdReceptor || (miEmailReceptor && u.receptorAsignado === miEmailReceptor)) {
+                    emisorAsignadoId = idUser;
+                    break;
+                }
             }
         }
 
         if (emisorAsignadoId) {
             console.log("Conectado al emisor asignado: " + emisorAsignadoId);
             iniciarMonitoreoTarget(emisorAsignadoId);
-        } else {
-            // Si el emisor asignado se desconecta, volvemos a la pantalla de espera
-            panelReceptor.classList.remove('danger-mode');
-            viewWaiting.style.display = 'flex';
-            viewAlarm.style.display = 'none';
         }
     });
 }
