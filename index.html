@@ -1,4 +1,76 @@
-<script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeZone - Inicio</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Carga de SDKs de Firebase (versión 8) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+</head>
+<body>
+
+    <h1>SafeZone</h1>
+    <p class="description">Sistema de Alerta y Monitoreo de Emergencias</p>
+
+    <div class="dashboard">
+        <!-- Vista cuando NO está autenticado -->
+        <div class="panel" id="auth-logged-out">
+            <div class="panel-title">🔑 Iniciar Sesión</div>
+            <p style="color: #94A3B8; font-size: 14px; margin-bottom: 20px;">
+                Iniciá sesión con Google para acceder al sistema SafeZone.
+            </p>
+            <button class="btn-cancel" id="btn-login-google" style="background-color: #38BDF8; color: #0F172A; width: 100%;">
+                Ingresar con Google
+            </button>
+        </div>
+
+        <!-- Vista cuando SÍ está autenticado -->
+        <div class="panel" id="auth-logged-in" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
+                <img id="user-photo" src="https://via.placeholder.com/45?text=U" alt="Perfil" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #38BDF8;">
+                <div>
+                    <strong id="user-name" style="display: block; color: #F1F5F9;">Usuario</strong>
+                    <span id="user-email" style="font-size: 12px; color: #94A3B8;">correo@ejemplo.com</span>
+                </div>
+            </div>
+            <button id="btn-logout" class="btn-cancel" style="background-color: #EF4444; color: white; padding: 6px 12px; font-size: 13px;">
+                Cerrar Sesión
+            </button>
+        </div>
+
+        <!-- Panel de selección de Rol (Emisor / Receptor) -->
+        <div class="panel" id="main-dashboard" style="display: none; flex-direction: column; gap: 20px;">
+            <div class="panel-title">⚙️ Seleccionar Modo</div>
+
+            <!-- Opción Emisor -->
+            <div style="background-color: #0F172A; padding: 15px; border-radius: 8px; text-align: left;">
+                <h3 style="margin: 0 0 10px 0; color: #EF4444; font-size: 16px;">📱 Modo Emisor (Víctima)</h3>
+                <label for="receptor-target" style="font-size: 12px; color: #94A3B8; display: block; margin-bottom: 5px;">
+                    ID / Correo del Receptor a vincular:
+                </label>
+                <input type="text" id="receptor-target" placeholder="Ej: ID_o_email_del_receptor" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background-color: #1E293B; color: white; box-sizing: border-box; margin-bottom: 10px;">
+                <button id="go-emisor" class="btn-cancel" style="background-color: #EF4444; color: white; width: 100%;">
+                    Ir a Pantalla Emisor
+                </button>
+            </div>
+
+            <!-- Opción Receptor -->
+            <div style="background-color: #0F172A; padding: 15px; border-radius: 8px; text-align: left;">
+                <h3 style="margin: 0 0 10px 0; color: #38BDF8; font-size: 16px;">🛡️ Modo Receptor (Protector)</h3>
+                <p style="font-size: 12px; color: #94A3B8; margin-top: 0;">
+                    Accedé a la central para monitorear las alertas entrantes.
+                </p>
+                <button id="go-receptor" class="btn-cancel" style="background-color: #38BDF8; color: #0F172A; width: 100%;">
+                    Ir a Central de Control
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script de Firebase y Lógica -->
+    <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
             authDomain: "safezone-9afe4.firebaseapp.com",
@@ -18,7 +90,7 @@
         
         let currentUser = null;
 
-        // Estado del usuario
+        // Listener del estado de autenticación
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
@@ -37,7 +109,7 @@
             }
         });
 
-        // Evento de inicio de sesión con Popup
+        // Evento iniciar sesión con Google
         document.getElementById('btn-login-google').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             
@@ -49,14 +121,14 @@
                     if (error.code === 'auth/popup-closed-by-user') {
                         console.log("El usuario cerró la ventana flotante.");
                     } else if (error.code === 'auth/popup-blocked') {
-                        alert("El navegador bloqueó la ventana emergente. Por favor, permití las ventanas emergentes (popups) para este sitio.");
+                        alert("El navegador bloqueó la ventana emergente. Por favor, permití los popups para este sitio.");
                     } else {
                         alert("Error al iniciar sesión: " + error.message);
                     }
                 });
         });
 
-        // Evento de cierre de sesión
+        // Evento cerrar sesión
         document.getElementById('btn-logout').addEventListener('click', () => {
             auth.signOut();
         });
@@ -85,3 +157,5 @@
             window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
         });
     </script>
+</body>
+</html>
