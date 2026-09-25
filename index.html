@@ -1,243 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SafeZone - Inicio</title>
-    <link rel="stylesheet" href="styles.css">
-    <!-- SDKs de Firebase (v8) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <style>
-        .dashboard .panel {
-            height: auto;
-            min-height: 380px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .menu-container {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            width: 100%;
-            margin-top: 15px;
-            flex-grow: 1;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            text-align: left;
-        }
-
-        .form-group label {
-            color: #94A3B8;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input {
-            background-color: #0F172A;
-            border: 2px solid #334155;
-            color: #F8FAFC;
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .form-group input:focus {
-            border-color: #38BDF8;
-            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
-        }
-
-        .btn-access {
-            width: 100%;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            border: none;
-            margin-top: auto;
-            color: #F8FAFC;
-            transition: transform 0.1s, filter 0.2s;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-access:active {
-            transform: scale(0.98);
-        }
-
-        .btn-emisor {
-            background-color: #EF4444;
-        }
-
-        .btn-emisor:hover {
-            filter: brightness(1.1);
-        }
-
-        .btn-receptor {
-            background-color: #10B981;
-        }
-
-        .btn-receptor:hover {
-            filter: brightness(1.1);
-        }
-
-        /* Estilos del Perfil y Login con Google */
-        .auth-card {
-            background-color: #1E293B;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 25px;
-            width: 100%;
-            max-width: 850px;
-            box-sizing: border-box;
-            text-align: center;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-google {
-            background-color: #FFFFFF;
-            color: #1F2937;
-            font-weight: 600;
-            font-size: 15px;
-            padding: 12px 24px;
-            border-radius: 10px;
-            border: none;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.2s, transform 0.1s;
-        }
-
-        .btn-google:hover {
-            background-color: #F3F4F6;
-        }
-
-        .btn-google:active {
-            transform: scale(0.98);
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .user-avatar {
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            border: 2px solid #38BDF8;
-            object-fit: cover;
-        }
-
-        .btn-logout {
-            background-color: transparent;
-            border: 1px solid #64748B;
-            color: #94A3B8;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            transition: border-color 0.2s, color 0.2s;
-        }
-
-        .btn-logout:hover {
-            border-color: #EF4444;
-            color: #EF4444;
-        }
-    </style>
-</head>
-<body>
-
-    <h1>SafeZone</h1>
-    <p class="description">Sistema de Alerta y Monitoreo Personalizado en Tiempo Real</p>
-
-    <!-- Bloque de Autenticación -->
-    <div class="auth-card">
-        <!-- Usuario No Autenticado -->
-        <div id="auth-logged-out">
-            <p style="margin-top: 0; color: #94A3B8; font-size: 14px; margin-bottom: 15px;">
-                Iniciá sesión con Google para identificar tu dispositivo de forma segura.
-            </p>
-            <button class="btn-google" id="btn-login-google">
-                <svg width="18" height="18" viewBox="0 0 18 18">
-                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.616z"/>
-                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                    <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-                </svg>
-                Iniciar Sesión con Google
-            </button>
-        </div>
-
-        <!-- Usuario Autenticado -->
-        <div id="auth-logged-in" style="display: none;" class="user-profile">
-            <div class="user-info">
-                <img id="user-photo" src="" alt="Avatar" class="user-avatar">
-                <div style="text-align: left;">
-                    <strong id="user-name" style="display: block; font-size: 16px; color: #F8FAFC;"></strong>
-                    <span id="user-email" style="font-size: 13px; color: #94A3B8;"></span>
-                </div>
-            </div>
-            <button class="btn-logout" id="btn-logout">Cerrar Sesión</button>
-        </div>
-    </div>
-
-    <!-- Modos de Operación (Visibles tras iniciar sesión) -->
-    <div class="dashboard" id="main-dashboard" style="display: none;">
-        <!-- Panel Emisor -->
-        <div class="panel">
-            <div class="panel-title">📱 Modo Emisor (Dispositivo)</div>
-            <p style="color: #94A3B8; font-size: 14px; margin: 0 0 15px 0;">
-                Ingresá el ID o Correo del Receptor asignado para vincularte con él.
-            </p>
-            
-            <div class="menu-container">
-                <div class="form-group">
-                    <label for="receptor-target">ID o Email del Receptor (Protector)</label>
-                    <input type="text" id="receptor-target" placeholder="Ej: receptor@gmail.com o UID">
-                </div>
-                <button class="btn-access btn-emisor" id="go-emisor">Ingresar como Emisor</button>
-            </div>
-        </div>
-
-        <!-- Panel Receptor -->
-        <div class="panel">
-            <div class="panel-title">🛡️ Modo Receptor (Centro de Control)</div>
-            <p style="color: #94A3B8; font-size: 14px; margin: 0 0 15px 0;">
-                Monitoreá las alertas que estén vinculadas a tu cuenta de Google.
-            </p>
-            
-            <div class="menu-container">
-                <p style="color: #38BDF8; font-size: 13px; margin: 20px 0; line-height: 1.4;">
-                    ✓ Tu identificador asignado es tu correo o UID de Google.
-                </p>
-                <button class="btn-access btn-receptor" id="go-receptor">Ingresar como Receptor</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
+<script>
         const firebaseConfig = {
             apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
             authDomain: "safezone-9afe4.firebaseapp.com",
@@ -256,13 +17,6 @@
         const mainDashboard = document.getElementById('main-dashboard');
         
         let currentUser = null;
-
-        // Capturar resultado de autenticación por redirección si aplica
-        auth.getRedirectResult().catch((error) => {
-            if (error.code !== "auth/popup-closed-by-user") {
-                console.error("Error en autenticación:", error);
-            }
-        });
 
         // Estado del usuario
         auth.onAuthStateChanged((user) => {
@@ -283,18 +37,23 @@
             }
         });
 
-        // Evento de inicio de sesión
+        // Evento de inicio de sesión con Popup
         document.getElementById('btn-login-google').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
             
-            auth.signInWithPopup(provider).catch((error) => {
-                if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user') {
-                    // Fallback a redirección si el navegador bloquea o cierra el popup
-                    auth.signInWithRedirect(provider);
-                } else {
-                    alert("Error al iniciar sesión: " + error.message);
-                }
-            });
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log("Sesión iniciada correctamente:", result.user);
+                })
+                .catch((error) => {
+                    if (error.code === 'auth/popup-closed-by-user') {
+                        console.log("El usuario cerró la ventana flotante.");
+                    } else if (error.code === 'auth/popup-blocked') {
+                        alert("El navegador bloqueó la ventana emergente. Por favor, permití las ventanas emergentes (popups) para este sitio.");
+                    } else {
+                        alert("Error al iniciar sesión: " + error.message);
+                    }
+                });
         });
 
         // Evento de cierre de sesión
@@ -326,5 +85,3 @@
             window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
         });
     </script>
-</body>
-</html>
