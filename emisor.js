@@ -38,6 +38,18 @@ if (!miIdEmisor || !idReceptorElegido) {
         receptorAsignado: idReceptorElegido,
         emailOriginal: rawIdEmisor 
     });
+
+    // 🧹 NUEVO: LIMPIEZA DE ALERTAS FANTASMA
+    // Si el usuario cerró la app antes sin cancelar, cancelamos sus alertas colgadas al entrar
+    database.ref('alertas/' + idReceptorElegido).once('value', (snapshot) => {
+        snapshot.forEach((child) => {
+            const alerta = child.val();
+            // Si la alerta es de este emisor y quedó en PELIGRO, la desactivamos
+            if (alerta.emisorId === miIdEmisor && alerta.estado === "PELIGRO") {
+                child.ref.update({ estado: "CANCELADA" });
+            }
+        });
+    });
 }
 
 // 1. Simulación botón de encendido (4 clics)
@@ -85,7 +97,7 @@ function dispararAlertaFirebase() {
         timestamp: firebase.database.ServerValue.TIMESTAMP
     });
 
-    // Actualizamos solo las coordenadas en segundo plano sin sobrescribir el estado
+    // Actualizamos las coordenadas sin sobrescribir el estado
     if ("geolocation" in navigator) {
         const opcionesGeo = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
 
