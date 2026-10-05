@@ -1,4 +1,4 @@
-// Credenciales de tu proyecto Firebase
+// Credenciales de tu proyecto Firebase[cite: 6]
 const firebaseConfig = {
     apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
     authDomain: "safezone-9afe4.firebaseapp.com",
@@ -9,7 +9,7 @@ const firebaseConfig = {
     appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
 };
 
-// Inicialización
+// Inicialización[cite: 6]
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
@@ -19,18 +19,20 @@ const viewAlarm = document.getElementById('receptor-alarm');
 const coordsText = document.getElementById('display-shared-coords');
 const btnVerMapa = document.getElementById('btn-ver-mapa');
 
-// --- LEER ATRIBUTOS DESDE LA URL ---
+// --- LEER ATRIBUTOS DESDE LA URL (Decodificados) ---
 const urlParams = new URLSearchParams(window.location.search);
-const miIdReceptor = urlParams.get('id');
-const miEmailReceptor = urlParams.get('email');
+const rawIdReceptor = urlParams.get('id') ? atob(urlParams.get('id')) : null;
+
+// Reemplazamos caracteres no válidos para la lectura en Firebase
+const miIdReceptor = rawIdReceptor ? rawIdReceptor.replace(/[.#$[\]]/g, '_') : null;
 
 if (!miIdReceptor) {
-    alert("Falta autenticación de Receptor. Regresando al inicio.");
+    alert("Falta ID de Receptor. Regresando al inicio.");
     window.location.href = "index.html";
 } else {
     database.ref('usuarios/' + miIdReceptor).set({
         rol: "receptor",
-        email: miEmailReceptor || ""
+        emailOriginal: rawIdReceptor // Guardamos el correo original como registro
     });
 
     database.ref('usuarios').on('value', (snapshot) => {
@@ -38,13 +40,9 @@ if (!miIdReceptor) {
         let emisorAsignadoId = null;
 
         for (let idUser in usuarios) {
-            const u = usuarios[idUser];
-            if (u.rol === "emisor") {
-                // Coincidir por UID de Google o por Email del receptor asignado
-                if (u.receptorAsignado === miIdReceptor || (miEmailReceptor && u.receptorAsignado === miEmailReceptor)) {
-                    emisorAsignadoId = idUser;
-                    break;
-                }
+            if (usuarios[idUser].rol === "emisor" && usuarios[idUser].receptorAsignado === miIdReceptor) {
+                emisorAsignadoId = idUser;
+                break;
             }
         }
 
@@ -68,6 +66,8 @@ function iniciarMonitoreoTarget(idEmisor) {
 
             if (data.latitud && data.longitud) {
                 coordsText.innerHTML = `<strong>¡Alerta de ${data.emisorNombre}!</strong><br>Lat: ${data.latitud.toFixed(5)}<br>Lon: ${data.longitud.toFixed(5)}<br><span style="font-size:11px; color:#FCA5A5;">Margen: ±${Math.round(data.precision)}m</span>`;
+                
+                // Redirigir a Google Maps con las coordenadas[cite: 6]
                 btnVerMapa.href = `https://www.google.com/maps?q=${data.latitud},${data.longitud}`;
                 btnVerMapa.style.display = 'inline-block';
             } else {

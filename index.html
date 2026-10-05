@@ -2,157 +2,118 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0F172A">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SafeZone - Inicio</title>
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Carga de SDKs de Firebase (Versión 8) -->
+    <!-- Scripts de Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        /* Mismos estilos que tenías anteriormente */
+        .dashboard .panel { height: auto; min-height: 400px; display: flex; flex-direction: column; }
+        .menu-container { display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 15px; flex-grow: 1; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+        .form-group label { color: #94A3B8; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input { background-color: #0F172A; border: 2px solid #334155; color: #F8FAFC; padding: 12px 16px; border-radius: 10px; font-size: 15px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-group input:focus { border-color: #38BDF8; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
+        .btn-access { width: 100%; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; margin-top: auto; color: #F8FAFC; transition: transform 0.1s, filter 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+        .btn-access:active { transform: scale(0.98); }
+        .btn-emisor { background-color: #EF4444; }
+        .btn-emisor:hover { filter: brightness(1.1); }
+        .btn-receptor { background-color: #10B981; }
+        .btn-receptor:hover { filter: brightness(1.1); }
+        
+        /* Nuevo estilo para botón de Google */
+        .btn-google { background-color: #4285F4; margin-bottom: 15px;}
+        .btn-google:hover { filter: brightness(1.1); }
+        .user-info { font-size: 14px; color: #38BDF8; margin-bottom: 15px; display: none; word-break: break-all;}
+    </style>
 </head>
 <body>
 
     <h1>SafeZone</h1>
-    <p class="description">Sistema de Alerta y Monitoreo de Emergencias</p>
+    <p class="description">Sistema de Alerta y Monitoreo Personalizado en Tiempo Real</p>
 
-    <div class="dashboard">
-        <!-- Vista cuando NO está autenticado -->
-        <div class="panel" id="auth-logged-out">
-            <div class="panel-title">🔑 Iniciar Sesión</div>
-            <p style="color: #94A3B8; font-size: 14px; margin-bottom: 20px;">
-                Iniciá sesión con Google para acceder al sistema SafeZone.
-            </p>
-            <button class="btn-cancel" id="btn-login-google" style="background-color: #38BDF8; color: #0F172A; width: 100%;">
-                Ingresar con Google
-            </button>
-        </div>
+    <!-- Botón de autenticación global -->
+    <button class="btn-access btn-google" id="btn-login" style="max-width: 400px; margin: 0 auto 20px auto; display: block;">
+        Iniciar sesión con Google
+    </button>
+    <div id="user-info" class="user-info" style="text-align: center; max-width: 400px; margin: 0 auto 20px auto;"></div>
 
-        <!-- Vista cuando SÍ está autenticado -->
-        <div class="panel" id="auth-logged-in" style="display: none; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 12px; text-align: left;">
-                <img id="user-photo" src="https://via.placeholder.com/45?text=U" alt="Perfil" style="width: 45px; height: 45px; border-radius: 50%; border: 2px solid #38BDF8;">
-                <div>
-                    <strong id="user-name" style="display: block; color: #F1F5F9;">Usuario</strong>
-                    <span id="user-email" style="font-size: 12px; color: #94A3B8;">correo@ejemplo.com</span>
+    <div class="dashboard" id="dashboard-content" style="display: none;">
+        <div class="panel">
+            <div class="panel-title">📱 Modo Emisor (Dispositivo)</div>
+            <p style="color: #94A3B8; font-size: 14px; margin: 0 0 15px 0;">Ingresá el correo del protector que va a recibir tus alertas.</p>
+            
+            <div class="menu-container">
+                <div class="form-group">
+                    <label for="receptor-target">Correo de tu Receptor (Protector)</label>
+                    <input type="email" id="receptor-target" placeholder="ejemplo@gmail.com">
                 </div>
+                <button class="btn-access btn-emisor" id="go-emisor">Ingresar como Emisor</button>
             </div>
-            <button id="btn-logout" class="btn-cancel" style="background-color: #EF4444; color: white; padding: 6px 12px; font-size: 13px;">
-                Cerrar Sesión
-            </button>
         </div>
 
-        <!-- Panel de selección de Rol (Emisor / Receptor) -->
-        <div class="panel" id="main-dashboard" style="display: none; flex-direction: column; gap: 20px;">
-            <div class="panel-title">⚙️ Seleccionar Modo</div>
-
-            <!-- Opción Emisor -->
-            <div style="background-color: #0F172A; padding: 15px; border-radius: 8px; text-align: left;">
-                <h3 style="margin: 0 0 10px 0; color: #EF4444; font-size: 16px;">📱 Modo Emisor (Víctima)</h3>
-                <label for="receptor-target" style="font-size: 12px; color: #94A3B8; display: block; margin-bottom: 5px;">
-                    ID / Correo del Receptor a vincular:
-                </label>
-                <input type="text" id="receptor-target" placeholder="Ej: ID_o_email_del_receptor" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #334155; background-color: #1E293B; color: white; box-sizing: border-box; margin-bottom: 10px;">
-                <button id="go-emisor" class="btn-cancel" style="background-color: #EF4444; color: white; width: 100%;">
-                    Ir a Pantalla Emisor
-                </button>
-            </div>
-
-            <!-- Opción Receptor -->
-            <div style="background-color: #0F172A; padding: 15px; border-radius: 8px; text-align: left;">
-                <h3 style="margin: 0 0 10px 0; color: #38BDF8; font-size: 16px;">🛡️ Modo Receptor (Protector)</h3>
-                <p style="font-size: 12px; color: #94A3B8; margin-top: 0;">
-                    Accedé a la central para monitorear las alertas entrantes.
-                </p>
-                <button id="go-receptor" class="btn-cancel" style="background-color: #38BDF8; color: #0F172A; width: 100%;">
-                    Ir a Central de Control
-                </button>
+        <div class="panel">
+            <div class="panel-title">🛡️ Modo Receptor (Centro de Control)</div>
+            <p style="color: #94A3B8; font-size: 14px; margin: 0 0 15px 0;">Solo ingresá para escuchar las alertas del emisor que te asignó.</p>
+            
+            <div class="menu-container">
+                <button class="btn-access btn-receptor" id="go-receptor">Ingresar como Receptor</button>
             </div>
         </div>
     </div>
 
-    <!-- Lógica JavaScript -->
-  <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
-        authDomain: "safezone-9afe4.firebaseapp.com",
-        databaseURL: "https://safezone-9afe4-default-rtdb.firebaseio.com",
-        projectId: "safezone-9afe4",
-        storageBucket: "safezone-9afe4.firebasestorage.app",
-        messagingSenderId: "366054781732",
-        appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
-    };
+    <script>
+        // Copia tu firebaseConfig de emisor.js aquí
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
+            authDomain: "safezone-9afe4.firebaseapp.com",
+            databaseURL: "https://safezone-9afe4-default-rtdb.firebaseio.com",
+            projectId: "safezone-9afe4",
+            storageBucket: "safezone-9afe4.firebasestorage.app",
+            messagingSenderId: "366054781732",
+            appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    auth.useDeviceLanguage();
+        let currentUserEmail = "";
 
-    const authOutView = document.getElementById('auth-logged-out');
-    const authInView = document.getElementById('auth-logged-in');
-    const mainDashboard = document.getElementById('main-dashboard');
-    const btnLoginGoogle = document.getElementById('btn-login-google');
-    
-    let currentUser = null;
-
-    // Detectar si estamos dentro de una WebView de Android/APK
-    function esWebViewAndroid() {
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        return (ua.indexOf("wv") > -1) || (ua.indexOf("Android") > -1 && ua.indexOf("Version/") > -1);
-    }
-
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            currentUser = user;
-            document.getElementById('user-name').innerText = user.displayName || "Usuario SafeZone";
-            document.getElementById('user-email').innerText = user.email || user.uid;
-            document.getElementById('user-photo').src = user.photoURL || 'https://via.placeholder.com/45?text=U';
-            
-            authOutView.style.display = 'none';
-            authInView.style.display = 'flex';
-            mainDashboard.style.display = 'flex';
-        } else {
-            currentUser = null;
-            authOutView.style.display = 'block';
-            authInView.style.display = 'none';
-            mainDashboard.style.display = 'none';
-        }
-    });
-
-    btnLoginGoogle.addEventListener('click', () => {
-        if (esWebViewAndroid()) {
-            // Si es WebView, abrimos la URL en el navegador del sistema
-            const googleAuthUrl = `https://safezone-9afe4.firebaseapp.com/__/auth/handler`;
-            window.open(`https://gabrielfleitas07.github.io/SafeZone/`, '_system');
-            alert("Para iniciar sesión en la APK, abrí el enlace en el navegador Chrome de tu teléfono.");
-        } else {
-            // Si es un navegador normal
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch((error) => {
-                alert("Error: " + error.message);
+        // Autenticación con Google
+        document.getElementById('btn-login').addEventListener('click', () => {
+            auth.signInWithPopup(provider).then((result) => {
+                currentUserEmail = result.user.email;
+                document.getElementById('btn-login').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'flex';
+                
+                const userInfoDiv = document.getElementById('user-info');
+                userInfoDiv.innerHTML = `Sesión iniciada como: <strong>${currentUserEmail}</strong>`;
+                userInfoDiv.style.display = 'block';
+            }).catch((error) => {
+                alert("Error al iniciar sesión: " + error.message);
             });
-        }
-    });
+        });
 
-    document.getElementById('btn-logout').addEventListener('click', () => auth.signOut());
+        // Ingreso como Emisor
+        document.getElementById('go-emisor').addEventListener('click', () => {
+            const emailReceptor = document.getElementById('receptor-target').value.trim();
+            if (!emailReceptor) {
+                alert("Ingresá el correo de tu receptor.");
+                return;
+            }
+            // Codificamos los correos para evitar problemas con los caracteres en la URL
+            window.location.href = `emisor.html?id=${btoa(currentUserEmail)}&receptor=${btoa(emailReceptor)}`;
+        });
 
-    document.getElementById('go-emisor').addEventListener('click', () => {
-        if (!currentUser) return;
-        const idReceptor = document.getElementById('receptor-target').value.trim();
-        if (!idReceptor) {
-            alert("Por favor, ingresá el ID o correo del Receptor.");
-            return;
-        }
-        const idEmisor = currentUser.uid;
-        const emisorName = currentUser.displayName || currentUser.email || "Emisor";
-        window.location.href = `emisor.html?id=${encodeURIComponent(idEmisor)}&receptor=${encodeURIComponent(idReceptor)}&name=${encodeURIComponent(emisorName)}`;
-    });
-
-    document.getElementById('go-receptor').addEventListener('click', () => {
-        if (!currentUser) return;
-        const idReceptor = currentUser.uid;
-        const emailReceptor = currentUser.email || "";
-        window.location.href = `receptor.html?id=${encodeURIComponent(idReceptor)}&email=${encodeURIComponent(emailReceptor)}`;
-    });
-</script>
+        // Ingreso como Receptor
+        document.getElementById('go-receptor').addEventListener('click', () => {
+            window.location.href = `receptor.html?id=${btoa(currentUserEmail)}`;
+        });
+    </script>
 </body>
 </html>
