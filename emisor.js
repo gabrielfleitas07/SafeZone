@@ -73,7 +73,7 @@ touchArea.addEventListener('touchend', () => {
 function dispararAlertaFirebase() {
     emisorOverlay.style.display = 'flex';
     
-    // Generamos un ID único para esta alerta específica
+    // Generamos un ID único para la alerta
     const alertKey = database.ref('alertas/' + idReceptorElegido).push().key;
     window.currentAlertKey = alertKey; 
 
@@ -111,11 +111,13 @@ function dispararAlertaFirebase() {
     }
 }
 
-// 4. Cancelar Alerta
+// 4. Cancelar Alerta (Marca el estado como CANCELADA)
 btnCancelar.addEventListener('click', () => {
     emisorOverlay.style.display = 'none';
     if (miIdEmisor && window.currentAlertKey) {
-        database.ref('alertas/' + idReceptorElegido + '/' + window.currentAlertKey).remove();
+        database.ref('alertas/' + idReceptorElegido + '/' + window.currentAlertKey).update({
+            estado: "CANCELADA"
+        });
         window.currentAlertKey = null;
     }
 });
