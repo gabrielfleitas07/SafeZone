@@ -1,4 +1,4 @@
-// Credenciales de tu proyecto Firebase[cite: 2]
+// Credenciales de tu proyecto Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
     authDomain: "safezone-9afe4.firebaseapp.com",
@@ -9,7 +9,7 @@ const firebaseConfig = {
     appId: "1:366054781732:web:a3fe42d60d90130732b9b1"
 };
 
-// Inicialización[cite: 2]
+// Inicialización
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
 
@@ -36,11 +36,11 @@ if (!miIdEmisor || !idReceptorElegido) {
     database.ref('usuarios/' + miIdEmisor).set({
         rol: "emisor",
         receptorAsignado: idReceptorElegido,
-        emailOriginal: rawIdEmisor // Guardamos el correo original para mostrarlo luego
+        emailOriginal: rawIdEmisor 
     });
 }
 
-// 1. Simulación botón de encendido (4 clics)[cite: 2]
+// 1. Simulación botón de encendido (4 clics)
 document.getElementById('btn-power-trigger').addEventListener('click', () => {
     clickCount++;
     clearTimeout(clickTimer);
@@ -52,7 +52,7 @@ document.getElementById('btn-power-trigger').addEventListener('click', () => {
     }
 });
 
-// 2. Control multitáctil de 4 dedos (2 segundos)[cite: 2]
+// 2. Control multitáctil de 4 dedos (2 segundos)
 touchArea.addEventListener('touchstart', (e) => {
     if (e.touches.length === 4) {
         touchArea.style.backgroundColor = "rgba(56, 189, 248, 0.2)";
@@ -69,56 +69,53 @@ touchArea.addEventListener('touchend', () => {
     touchArea.innerText = "ZONA MULTITÁCTIL\nApoyá 4 dedos acá por 2s";
 });
 
-// 3. Envío de datos a Firebase con Geolocalización[cite: 2]
+// 3. Envío de datos a Firebase con Geolocalización
 function dispararAlertaFirebase() {
     emisorOverlay.style.display = 'flex';
+    
+    // Generamos un ID único para esta alerta específica
+    const alertKey = database.ref('alertas/' + idReceptorElegido).push().key;
+    window.currentAlertKey = alertKey; 
+
+    const datosAlerta = {
+        estado: "PELIGRO",
+        emisorId: miIdEmisor,
+        emisorNombre: rawIdEmisor,
+        timestamp: firebase.database.ServerValue.TIMESTAMP
+    };
 
     if ("geolocation" in navigator) {
-        const opcionesGeo = {
-            enableHighAccuracy: true, 
-            timeout: 10000,           
-            maximumAge: 0             
-        };
+        const opcionesGeo = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
 
         navigator.geolocation.getCurrentPosition(
             (posicion) => {
-                database.ref('alertas/' + miIdEmisor).set({
-                    estado: "PELIGRO",
-                    emisorNombre: rawIdEmisor, // Enviamos el correo real para que el receptor sepa quién es
-                    latitud: posicion.coords.latitude,
-                    longitud: posicion.coords.longitude,
-                    precision: posicion.coords.accuracy
-                });
+                datosAlerta.latitud = posicion.coords.latitude;
+                datosAlerta.longitud = posicion.coords.longitude;
+                datosAlerta.precision = posicion.coords.accuracy;
+                database.ref('alertas/' + idReceptorElegido + '/' + alertKey).set(datosAlerta);
             },
             (error) => {
                 console.error("Error de geolocalización:", error);
-                database.ref('alertas/' + miIdEmisor).set({
-                    estado: "PELIGRO",
-                    emisorNombre: rawIdEmisor,
-                    latitud: null,
-                    longitud: null,
-                    error_geo: "Permiso denegado o GPS inaccesible"
-                });
+                datosAlerta.latitud = null;
+                datosAlerta.longitud = null;
+                datosAlerta.error_geo = "Permiso denegado o GPS inaccesible";
+                database.ref('alertas/' + idReceptorElegido + '/' + alertKey).set(datosAlerta);
             },
             opcionesGeo
         );
     } else {
-        database.ref('alertas/' + miIdEmisor).set({
-            estado: "PELIGRO",
-            emisorNombre: rawIdEmisor,
-            latitud: null,
-            longitud: null,
-            error_geo: "API no soportada"
-        });
+        datosAlerta.latitud = null;
+        datosAlerta.longitud = null;
+        datosAlerta.error_geo = "API no soportada";
+        database.ref('alertas/' + idReceptorElegido + '/' + alertKey).set(datosAlerta);
     }
 }
 
-// 4. Cancelar Alerta[cite: 2]
+// 4. Cancelar Alerta
 btnCancelar.addEventListener('click', () => {
     emisorOverlay.style.display = 'none';
-    if (miIdEmisor) {
-        database.ref('alertas/' + miIdEmisor).set({
-            estado: "NORMAL"
-        });
+    if (miIdEmisor && window.currentAlertKey) {
+        database.ref('alertas/' + idReceptorElegido + '/' + window.currentAlertKey).remove();
+        window.currentAlertKey = null;
     }
 });
