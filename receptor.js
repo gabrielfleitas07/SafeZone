@@ -38,7 +38,7 @@ if (!miIdReceptor) {
     database.ref('alertas/' + miIdReceptor).on('value', (snapshot) => {
         const alertas = snapshot.val();
         
-        mensajesHistorial.innerHTML = ''; // Limpiamos la sección inferior
+        mensajesHistorial.innerHTML = ''; // Limpiamos contenedor de mensajes
         let hayAlertaActiva = false;
 
         if (alertas) {
@@ -48,17 +48,17 @@ if (!miIdReceptor) {
                 if (alerta.estado === "PELIGRO") {
                     hayAlertaActiva = true;
 
-                    // Mostramos la alerta activa en la sección superior
+                    // Mostramos la alerta activa en la pantalla superior
                     if (alerta.latitud && alerta.longitud) {
                         coordsText.innerHTML = `<strong>Emisor: ${alerta.emisorNombre}</strong><br>Lat: ${alerta.latitud.toFixed(5)}<br>Lon: ${alerta.longitud.toFixed(5)}<br><span style="font-size:11px; color:#FCA5A5;">Margen: ±${Math.round(alerta.precision || 0)}m</span>`;
                         btnVerMapa.href = `https://www.google.com/maps?q=${alerta.latitud},${alerta.longitud}`;
                         btnVerMapa.style.display = 'inline-block';
                     } else {
-                        coordsText.innerText = `Ubicación no disponible de ${alerta.emisorNombre || 'Emisor'}\n(${alerta.error_geo || 'Error de permisos'})`;
+                        coordsText.innerText = `Ubicación de ${alerta.emisorNombre || 'Emisor'}\n(${alerta.error_geo || 'Obteniendo GPS...'})`;
                         btnVerMapa.style.display = 'none';
                     }
                 } else if (alerta.estado === "CANCELADA") {
-                    // Si la alerta fue quitada, generamos un mensaje en la parte inferior
+                    // Se crea la tarjeta de mensaje en la parte inferior
                     const msgCard = document.createElement('div');
                     msgCard.style.backgroundColor = '#0F172A';
                     msgCard.style.border = '1px solid #334155';
@@ -67,19 +67,21 @@ if (!miIdReceptor) {
                     msgCard.style.textAlign = 'left';
                     msgCard.style.fontSize = '13px';
                     msgCard.style.color = '#F8FAFC';
+                    msgCard.style.width = '100%';
+                    msgCard.style.boxSizing = 'border-box';
 
                     let mapLink = '';
                     if (alerta.latitud && alerta.longitud) {
                         const mapsUrl = `https://www.google.com/maps?q=${alerta.latitud},${alerta.longitud}`;
-                        mapLink = `<br><a href="${mapsUrl}" target="_blank" style="color: #38BDF8; text-decoration: underline; font-weight: bold; display: inline-block; margin-top: 6px;">📍 Abrir en Google Maps</a>`;
+                        mapLink = `<a href="${mapsUrl}" target="_blank" style="color: #38BDF8; text-decoration: underline; font-weight: bold; display: inline-block; margin-top: 6px;">📍 Ver ubicación en Google Maps</a>`;
                     } else {
-                        mapLink = `<br><span style="color: #94A3B8; font-size: 11px;">(Ubicación no registrada)</span>`;
+                        mapLink = `<span style="color: #94A3B8; font-size: 11px;">(Ubicación GPS no registrada)</span>`;
                     }
 
                     msgCard.innerHTML = `
                         <div style="font-weight: bold; color: #EF4444; margin-bottom: 4px;">ℹ️ Alerta Finalizada</div>
-                        <div><strong>Correo del emisor:</strong> ${alerta.emisorNombre || 'Desconocido'}</div>
-                        ${mapLink}
+                        <div style="margin-bottom: 4px;"><strong>Emisor:</strong> ${alerta.emisorNombre || 'Desconocido'}</div>
+                        <div>${mapLink}</div>
                     `;
 
                     mensajesHistorial.appendChild(msgCard);
@@ -87,7 +89,7 @@ if (!miIdReceptor) {
             });
         }
 
-        // Estado visual del panel según si hay alerta activa o no
+        // Cambio entre vista de peligro y vista de espera
         if (hayAlertaActiva) {
             panelReceptor.classList.add('danger-mode');
             viewWaiting.style.display = 'none';

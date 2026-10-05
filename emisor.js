@@ -73,51 +73,52 @@ touchArea.addEventListener('touchend', () => {
 function dispararAlertaFirebase() {
     emisorOverlay.style.display = 'flex';
     
-    // Generamos un ID único para la alerta
-    const alertKey = database.ref('alertas/' + idReceptorElegido).push().key;
-    window.currentAlertKey = alertKey; 
+    // Generamos la referencia de una nueva alerta
+    const alertRef = database.ref('alertas/' + idReceptorElegido).push();
+    window.currentAlertRef = alertRef; 
 
-    const datosAlerta = {
+    // Guardamos el estado inicial de inmediato
+    alertRef.set({
         estado: "PELIGRO",
         emisorId: miIdEmisor,
         emisorNombre: rawIdEmisor,
         timestamp: firebase.database.ServerValue.TIMESTAMP
-    };
+    });
 
+    // Actualizamos solo las coordenadas en segundo plano sin sobrescribir el estado
     if ("geolocation" in navigator) {
         const opcionesGeo = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
 
         navigator.geolocation.getCurrentPosition(
             (posicion) => {
-                datosAlerta.latitud = posicion.coords.latitude;
-                datosAlerta.longitud = posicion.coords.longitude;
-                datosAlerta.precision = posicion.coords.accuracy;
-                database.ref('alertas/' + idReceptorElegido + '/' + alertKey).set(datosAlerta);
+                alertRef.update({
+                    latitud: posicion.coords.latitude,
+                    longitud: posicion.coords.longitude,
+                    precision: posicion.coords.accuracy
+                });
             },
             (error) => {
                 console.error("Error de geolocalización:", error);
-                datosAlerta.latitud = null;
-                datosAlerta.longitud = null;
-                datosAlerta.error_geo = "Permiso denegado o GPS inaccesible";
-                database.ref('alertas/' + idReceptorElegido + '/' + alertKey).set(datosAlerta);
+                alertRef.update({
+                    error_geo: "Permiso denegado o GPS inaccesible"
+                });
             },
             opcionesGeo
         );
     } else {
-        datosAlerta.latitud = null;
-        datosAlerta.longitud = null;
-        datosAlerta.error_geo = "API no soportada";
-        database.ref('alertas/' + idReceptorElegido + '/' + alertKey).set(datosAlerta);
+        alertRef.update({
+            error_geo: "API no soportada"
+        });
     }
 }
 
-// 4. Cancelar Alerta (Marca el estado como CANCELADA)
+// 4. Cancelar Alerta (Cambia el estado a CANCELADA)
 btnCancelar.addEventListener('click', () => {
     emisorOverlay.style.display = 'none';
-    if (miIdEmisor && window.currentAlertKey) {
-        database.ref('alertas/' + idReceptorElegido + '/' + window.currentAlertKey).update({
+    if (window.currentAlertRef) {
+        window.currentAlertRef.update({
             estado: "CANCELADA"
         });
-        window.currentAlertKey = null;
+        window.currentAlertRef = null;
     }
 });
