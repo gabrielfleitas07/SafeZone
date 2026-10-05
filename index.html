@@ -12,7 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* Mismos estilos que tenías anteriormente */
+        /* Estilos generales */
         .dashboard .panel { height: auto; min-height: 400px; display: flex; flex-direction: column; }
         .menu-container { display: flex; flex-direction: column; gap: 15px; width: 100%; margin-top: 15px; flex-grow: 1; }
         .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
@@ -26,10 +26,13 @@
         .btn-receptor { background-color: #10B981; }
         .btn-receptor:hover { filter: brightness(1.1); }
         
-        /* Nuevo estilo para botón de Google */
+        /* Botones de Auth */
         .btn-google { background-color: #4285F4; margin-bottom: 15px;}
         .btn-google:hover { filter: brightness(1.1); }
-        .user-info { font-size: 14px; color: #38BDF8; margin-bottom: 15px; display: none; word-break: break-all;}
+        .btn-logout { background-color: #475569; margin-bottom: 20px;}
+        .btn-logout:hover { filter: brightness(1.2); }
+        
+        .user-info { font-size: 14px; color: #38BDF8; margin-bottom: 10px; display: none; word-break: break-all;}
     </style>
 </head>
 <body>
@@ -37,12 +40,18 @@
     <h1>SafeZone</h1>
     <p class="description">Sistema de Alerta y Monitoreo Personalizado en Tiempo Real</p>
 
-    <!-- Botón de autenticación global -->
+    <!-- Zona de Autenticación -->
     <button class="btn-access btn-google" id="btn-login" style="max-width: 400px; margin: 0 auto 20px auto; display: block;">
         Iniciar sesión con Google
     </button>
-    <div id="user-info" class="user-info" style="text-align: center; max-width: 400px; margin: 0 auto 20px auto;"></div>
 
+    <div id="user-info" class="user-info" style="text-align: center; max-width: 400px; margin: 0 auto;"></div>
+    
+    <button class="btn-access btn-logout" id="btn-logout" style="max-width: 400px; margin: 10px auto 20px auto; display: none;">
+        Cerrar sesión
+    </button>
+
+    <!-- Paneles (Ocultos hasta iniciar sesión) -->
     <div class="dashboard" id="dashboard-content" style="display: none;">
         <div class="panel">
             <div class="panel-title">📱 Modo Emisor (Dispositivo)</div>
@@ -68,7 +77,7 @@
     </div>
 
     <script>
-        // Copia tu firebaseConfig de emisor.js aquí
+        // Copia tu firebaseConfig
         const firebaseConfig = {
             apiKey: "AIzaSyBzFo4tAspET175kUceKjR8d9-4WeHzUi8",
             authDomain: "safezone-9afe4.firebaseapp.com",
@@ -84,33 +93,55 @@
 
         let currentUserEmail = "";
 
-        // Autenticación con Google
-        document.getElementById('btn-login').addEventListener('click', () => {
-            auth.signInWithPopup(provider).then((result) => {
-                currentUserEmail = result.user.email;
+        // 1. OBSERVADOR DE SESIÓN (Persistencia)
+        // Se ejecuta automáticamente al cargar la página o cuando el usuario entra/sale
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // Si el usuario ya está logueado
+                currentUserEmail = user.email;
                 document.getElementById('btn-login').style.display = 'none';
+                document.getElementById('btn-logout').style.display = 'block';
                 document.getElementById('dashboard-content').style.display = 'flex';
                 
                 const userInfoDiv = document.getElementById('user-info');
                 userInfoDiv.innerHTML = `Sesión iniciada como: <strong>${currentUserEmail}</strong>`;
                 userInfoDiv.style.display = 'block';
-            }).catch((error) => {
+            } else {
+                // Si no hay sesión iniciada
+                currentUserEmail = "";
+                document.getElementById('btn-login').style.display = 'block';
+                document.getElementById('btn-logout').style.display = 'none';
+                document.getElementById('dashboard-content').style.display = 'none';
+                document.getElementById('user-info').style.display = 'none';
+            }
+        });
+
+        // 2. INICIAR SESIÓN
+        document.getElementById('btn-login').addEventListener('click', () => {
+            auth.signInWithPopup(provider).catch((error) => {
                 alert("Error al iniciar sesión: " + error.message);
+            });
+            // No hace falta modificar el HTML acá, el onAuthStateChanged se encarga al tener éxito.
+        });
+
+        // 3. CERRAR SESIÓN
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            auth.signOut().catch((error) => {
+                alert("Error al cerrar sesión: " + error.message);
             });
         });
 
-        // Ingreso como Emisor
+        // 4. INGRESAR COMO EMISOR
         document.getElementById('go-emisor').addEventListener('click', () => {
             const emailReceptor = document.getElementById('receptor-target').value.trim();
             if (!emailReceptor) {
                 alert("Ingresá el correo de tu receptor.");
                 return;
             }
-            // Codificamos los correos para evitar problemas con los caracteres en la URL
             window.location.href = `emisor.html?id=${btoa(currentUserEmail)}&receptor=${btoa(emailReceptor)}`;
         });
 
-        // Ingreso como Receptor
+        // 5. INGRESAR COMO RECEPTOR
         document.getElementById('go-receptor').addEventListener('click', () => {
             window.location.href = `receptor.html?id=${btoa(currentUserEmail)}`;
         });
